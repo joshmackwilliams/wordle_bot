@@ -93,8 +93,10 @@ fn score(guess: &str, possible_solutions: &[String]) -> Score {
         group_sizes[signature as usize] += 1;
     }
     let mut score = 0;
-    for amount in group_sizes {
-        score += amount * amount;
+    // We don't count the last signature, which is "ggggg"
+    for i in 0..group_sizes.len() - 1 {
+        let group_size = group_sizes[i];
+        score += group_size * group_size;
     }
     score
 }
