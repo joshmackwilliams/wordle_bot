@@ -28,37 +28,30 @@ const POSSIBLE_FEEDBACKS: usize = 3_usize.pow(WORD_LENGTH as u32);
 type Feedback = u32;
 type Score = f32;
 
-struct WordleBot {
+struct WordleDictionary {
     n_words: usize,
     n_solutions: usize,
     solutions: Vec<String>,
     all_words: Vec<String>,
     feedbacks: Vec<Vec<Feedback>>,
-    remaining_set: Vec<usize>,
-    first_guess: usize,
-    is_first_guess: bool,
     solutions_to_words: Vec<usize>,
 }
 
-impl WordleBot {
+impl WordleDictionary {
     fn new(all_words: Vec<String>, solutions: Vec<String>) -> Self {
         let n_words = all_words.len();
         let n_solutions = solutions.len();
-        let mut bot = WordleBot {
+        let mut dictionary = WordleDictionary {
             n_words,
             n_solutions,
             all_words,
             solutions,
             feedbacks: Vec::new(),
-            remaining_set: (0..n_solutions).collect(),
-            first_guess: 0,
-            is_first_guess: false,
             solutions_to_words: Vec::new(),
         };
-        bot.calculate_solutions_to_words();
-        bot.calculate_feedbacks();
-        bot.calculate_first_guess();
-        bot
+        dictionary.calculate_solutions_to_words();
+        dictionary.calculate_feedbacks();
+        dictionary
     }
 
     fn calculate_solutions_to_words(&mut self) {
@@ -78,46 +71,6 @@ impl WordleBot {
 
     fn solution_to_word(&self, solution: usize) -> usize {
         self.solutions_to_words[solution]
-    }
-
-    fn calculate_first_guess(&mut self) {
-        self.first_guess = self.get_guess();
-        self.is_first_guess = true;
-    }
-
-    fn give_feedback(&mut self, word: usize, feedback: Feedback) {
-        self.is_first_guess = false;
-        let feedbacks = &self.feedbacks[word];
-        self.remaining_set.retain(|&x| feedbacks[x] == feedback);
-    }
-
-    fn get_guess(&self) -> usize {
-        if let Option::Some(solution) = self.get_solution() {
-            self.solution_to_word(solution)
-        } else if self.is_first_guess {
-            self.first_guess
-        } else {
-            (0..self.n_words)
-                .into_iter()
-                .map(|word| (word, self.score(word)))
-                .reduce(|x, y| if x.1 < y.1 {x} else {y})
-                .expect("Error: No guessable words!")
-                .0
-        }
-    }
-
-    fn score(&self, guess: usize) -> Score {
-        let feedbacks = &self.feedbacks[guess];
-        let mut class_sizes: [u32; POSSIBLE_FEEDBACKS] = [0; POSSIBLE_FEEDBACKS];
-        for &possible_solution in self.remaining_set.iter() {
-            class_sizes[feedbacks[possible_solution] as usize] += 1;
-        }
-        class_sizes
-            .into_iter()
-            .take(POSSIBLE_FEEDBACKS - 1)
-            .map(|class_size| class_size as f32)
-            .map(|class_size| (class_size * (class_size + 1.0).log2()) as Score)
-            .sum()
     }
 
     fn calculate_feedbacks(&mut self) {
@@ -177,6 +130,75 @@ impl WordleBot {
         self.feedbacks[guess][solution]
     }
 
+    fn solution_string(&self, word: usize) -> &String {
+        &self.solutions[word]
+    }
+
+    fn word_string(&self, word: usize) -> &String {
+        &self.all_words[word]
+    }
+}
+
+struct WordleBot {
+    dictionary: WordleDictionary,
+    remaining_set: Vec<usize>,
+    first_guess: usize,
+    is_first_guess: bool,
+}
+
+impl WordleBot {
+    fn new(dictionary: WordleDictionary) -> Self {
+        let n_solutions = dictionary.n_solutions;
+        let mut bot = WordleBot {
+            dictionary,
+            remaining_set: (0..n_solutions).collect(),
+            first_guess: 0,
+            is_first_guess: false,
+        };
+        bot.calculate_first_guess();
+        bot
+    }
+
+    fn calculate_first_guess(&mut self) {
+        self.first_guess = self.get_guess();
+        self.is_first_guess = true;
+    }
+
+    fn give_feedback(&mut self, word: usize, feedback: Feedback) {
+        self.is_first_guess = false;
+        let feedbacks = &self.dictionary.feedbacks[word];
+        self.remaining_set.retain(|&x| feedbacks[x] == feedback);
+    }
+
+    fn get_guess(&self) -> usize {
+        if let Option::Some(solution) = self.get_solution() {
+            self.dictionary.solution_to_word(solution)
+        } else if self.is_first_guess {
+            self.first_guess
+        } else {
+            (0..self.dictionary.n_words)
+                .into_iter()
+                .map(|word| (word, self.score(word)))
+                .reduce(|x, y| if x.1 < y.1 {x} else {y})
+                .expect("Error: No guessable words!")
+                .0
+        }
+    }
+
+    fn score(&self, guess: usize) -> Score {
+        let feedbacks = &self.dictionary.feedbacks[guess];
+        let mut class_sizes: [u32; POSSIBLE_FEEDBACKS] = [0; POSSIBLE_FEEDBACKS];
+        for &possible_solution in self.remaining_set.iter() {
+            class_sizes[feedbacks[possible_solution] as usize] += 1;
+        }
+        class_sizes
+            .into_iter()
+            .take(POSSIBLE_FEEDBACKS - 1)
+            .map(|class_size| class_size as f32)
+            .map(|class_size| (class_size * (class_size + 1.0).log2()) as Score)
+            .sum()
+    }
+
     fn get_solution(&self) -> Option<usize> {
         if self.remaining_set.len() == 1 {
             Option::Some(self.remaining_set[0])
@@ -185,17 +207,9 @@ impl WordleBot {
         }
     }
 
-    fn solution_string(&self, word: usize) -> &String {
-        &self.solutions[word]
-    }
-
-    fn word_string(&self, word: usize) -> &String {
-        &self.all_words[word]
-    }
-
     fn reset(&mut self) {
         self.is_first_guess = true;
-        self.remaining_set = (0..self.n_solutions).collect();
+        self.remaining_set = (0..self.dictionary.n_solutions).collect();
     }
 }
 
@@ -215,19 +229,19 @@ fn feedback_from_string(input: &str) -> Feedback {
 
 fn display_average_guesses(mut bot: WordleBot) {
     let mut total_guesses = 0;
-    for solution in 0..bot.n_solutions {
+    for solution in 0..bot.dictionary.n_solutions {
         bot.reset();
-        let solution_as_word = bot.solution_to_word(solution);
+        let solution_as_word = bot.dictionary.solution_to_word(solution);
         loop {
             let guess: usize = bot.get_guess();
             total_guesses += 1;
             if guess == solution_as_word {
                 break;
             }
-            bot.give_feedback(guess, bot.get_feedback(solution, guess));
+            bot.give_feedback(guess, bot.dictionary.get_feedback(solution, guess));
         }
     }
-    let average_guesses = (total_guesses as f64) / (bot.n_solutions as f64);
+    let average_guesses = (total_guesses as f64) / (bot.dictionary.n_solutions as f64);
     println!("Average guesses used: {average_guesses}");
 }
 
@@ -235,14 +249,14 @@ fn play_game(mut bot: WordleBot) {
     loop {
         match bot.get_solution() {
             Option::Some(solution) => {
-                let solution_string = bot.solution_string(solution);
+                let solution_string = bot.dictionary.solution_string(solution);
                 println!("Solution found: {solution_string}");
                 break;
             }
             Option::None => (),
         }
         let guess = bot.get_guess();
-        let guess_string = bot.word_string(guess);
+        let guess_string = bot.dictionary.word_string(guess);
 
         println!("My guess is {guess_string}",);
         print!("Please enter feedback using 'g', 'y', and 'x': ");
@@ -276,7 +290,7 @@ fn main() {
         .lines()
         .map(|x| x.unwrap())
         .collect();
-    let bot = WordleBot::new(all_words, solutions);
+    let bot = WordleBot::new(WordleDictionary::new(all_words, solutions));
 
     match mode.as_str() {
         "average" => display_average_guesses(bot),
