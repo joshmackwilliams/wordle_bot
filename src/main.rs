@@ -179,7 +179,7 @@ impl WordleBot {
             (0..self.dictionary.n_words)
                 .into_iter()
                 .map(|word| (word, self.score(word)))
-                .reduce(|x, y| if x.1 < y.1 {x} else {y})
+                .reduce(|x, y| if x.1 < y.1 { x } else { y })
                 .expect("Error: No guessable words!")
                 .0
         }
