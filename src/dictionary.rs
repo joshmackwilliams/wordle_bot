@@ -19,12 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use crate::types::Feedback;
 
 pub struct WordleDictionary<const WORD_LENGTH: usize> {
-    pub n_words: usize,
-    pub n_solutions: usize,
-    pub solutions: Vec<String>,
-    pub all_words: Vec<String>,
-    pub feedbacks: Vec<Vec<Feedback>>,
-    pub solutions_to_words: Vec<usize>,
+    n_words: usize,
+    n_solutions: usize,
+    solutions: Vec<String>,
+    all_words: Vec<String>,
+    feedbacks: Vec<Vec<Feedback>>,
+    solutions_to_words: Vec<usize>,
 }
 
 impl<const WORD_LENGTH: usize> WordleDictionary<WORD_LENGTH> {
@@ -44,7 +44,7 @@ impl<const WORD_LENGTH: usize> WordleDictionary<WORD_LENGTH> {
         dictionary
     }
 
-    pub fn calculate_solutions_to_words(&mut self) {
+    fn calculate_solutions_to_words(&mut self) {
         self.solutions_to_words = self
             .solutions
             .iter()
@@ -63,7 +63,7 @@ impl<const WORD_LENGTH: usize> WordleDictionary<WORD_LENGTH> {
         self.solutions_to_words[solution]
     }
 
-    pub fn calculate_feedbacks(&mut self) {
+    fn calculate_feedbacks(&mut self) {
         self.feedbacks = (0..self.n_words)
             .into_iter()
             .map(|guess| {
@@ -126,5 +126,13 @@ impl<const WORD_LENGTH: usize> WordleDictionary<WORD_LENGTH> {
 
     pub fn word_string(&self, word: usize) -> &String {
         &self.all_words[word]
+    }
+
+    pub fn get_n_words(&self) -> usize {
+        self.n_words
+    }
+
+    pub fn get_n_solutions(&self) -> usize {
+        self.n_solutions
     }
 }

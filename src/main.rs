@@ -20,9 +20,9 @@ use std::env;
 use std::fs::File;
 use std::io::{self, stdin, BufRead, Write};
 
-use wordle_bot::types::Feedback;
-use wordle_bot::dictionary::WordleDictionary;
 use wordle_bot::bot::WordleBot;
+use wordle_bot::dictionary::WordleDictionary;
+use wordle_bot::types::Feedback;
 
 // The word length is hardcoded so that we can store buffers of the right length on the stack
 const WORD_LENGTH: usize = 5;
@@ -43,19 +43,19 @@ fn feedback_from_string(input: &str) -> Feedback {
 
 fn display_average_guesses(mut bot: WordleBot) {
     let mut total_guesses = 0;
-    for solution in 0..bot.dictionary.n_solutions {
+    for solution in 0..bot.get_dictionary().get_n_solutions() {
         bot.reset();
-        let solution_as_word = bot.dictionary.solution_to_word(solution);
+        let solution_as_word = bot.get_dictionary().solution_to_word(solution);
         loop {
             let guess: usize = bot.get_guess();
             total_guesses += 1;
             if guess == solution_as_word {
                 break;
             }
-            bot.give_feedback(guess, bot.dictionary.get_feedback(solution, guess));
+            bot.give_feedback(guess, bot.get_dictionary().get_feedback(solution, guess));
         }
     }
-    let average_guesses = (total_guesses as f64) / (bot.dictionary.n_solutions as f64);
+    let average_guesses = (total_guesses as f64) / (bot.get_dictionary().get_n_solutions() as f64);
     println!("Average guesses used: {average_guesses}");
 }
 
@@ -63,14 +63,14 @@ fn play_game(mut bot: WordleBot) {
     loop {
         match bot.get_solution() {
             Option::Some(solution) => {
-                let solution_string = bot.dictionary.solution_string(solution);
+                let solution_string = bot.get_dictionary().solution_string(solution);
                 println!("Solution found: {solution_string}");
                 break;
             }
             Option::None => (),
         }
         let guess = bot.get_guess();
-        let guess_string = bot.dictionary.word_string(guess);
+        let guess_string = bot.get_dictionary().word_string(guess);
 
         println!("My guess is {guess_string}",);
         print!("Please enter feedback using 'g', 'y', and 'x': ");

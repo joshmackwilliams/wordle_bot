@@ -20,10 +20,10 @@ use crate::dictionary::WordleDictionary;
 use crate::types::*;
 
 const WORD_LENGTH: usize = 5;
-const POSSIBLE_FEEDBACKS:usize = 3_usize.pow(WORD_LENGTH as u32);
+const POSSIBLE_FEEDBACKS: usize = 3_usize.pow(WORD_LENGTH as u32);
 
 pub struct WordleBot {
-    pub dictionary: WordleDictionary<WORD_LENGTH>,
+    dictionary: WordleDictionary<WORD_LENGTH>,
     remaining_set: Vec<usize>,
     first_guess: usize,
     is_first_guess: bool,
@@ -31,7 +31,7 @@ pub struct WordleBot {
 
 impl WordleBot {
     pub fn new(dictionary: WordleDictionary<WORD_LENGTH>) -> Self {
-        let n_solutions = dictionary.n_solutions;
+        let n_solutions = dictionary.get_n_solutions();
         let mut bot = WordleBot {
             dictionary,
             remaining_set: (0..n_solutions).collect(),
@@ -49,8 +49,8 @@ impl WordleBot {
 
     pub fn give_feedback(&mut self, word: usize, feedback: Feedback) {
         self.is_first_guess = false;
-        let feedbacks = &self.dictionary.feedbacks[word];
-        self.remaining_set.retain(|&x| feedbacks[x] == feedback);
+        self.remaining_set
+            .retain(|&x| self.dictionary.get_feedback(x, word) == feedback);
     }
 
     pub fn get_guess(&self) -> usize {
@@ -59,7 +59,7 @@ impl WordleBot {
         } else if self.is_first_guess {
             self.first_guess
         } else {
-            (0..self.dictionary.n_words)
+            (0..self.dictionary.get_n_words())
                 .into_iter()
                 .map(|word| (word, self.score(word)))
                 .reduce(|x, y| if x.1 < y.1 { x } else { y })
@@ -69,10 +69,9 @@ impl WordleBot {
     }
 
     fn score(&self, guess: usize) -> Score {
-        let feedbacks = &self.dictionary.feedbacks[guess];
         let mut class_sizes: [u32; POSSIBLE_FEEDBACKS] = [0; POSSIBLE_FEEDBACKS];
         for &possible_solution in self.remaining_set.iter() {
-            class_sizes[feedbacks[possible_solution] as usize] += 1;
+            class_sizes[self.dictionary.get_feedback(possible_solution, guess) as usize] += 1;
         }
         class_sizes
             .into_iter()
@@ -92,6 +91,10 @@ impl WordleBot {
 
     pub fn reset(&mut self) {
         self.is_first_guess = true;
-        self.remaining_set = (0..self.dictionary.n_solutions).collect();
+        self.remaining_set = (0..self.dictionary.get_n_solutions()).collect();
+    }
+
+    pub fn get_dictionary(&self) -> &WordleDictionary<WORD_LENGTH> {
+        &self.dictionary
     }
 }
