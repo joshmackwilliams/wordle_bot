@@ -36,27 +36,27 @@ pub fn calculate_feedback(target: &[u8], guess: &[u8]) -> Feedback {
     // Build a histogram of letters in the target and find correctly placed letters in one pass
     let mut unused_letters: [u8; NUM_LETTERS] = [0; NUM_LETTERS];
     let mut correct_feedback: Feedback = 0;
-    for i in 0..word_length {
+    target.iter().zip(guess.iter()).for_each(|characters| {
         correct_feedback *= 3;
-        if target[i] == guess[i] {
+        if characters.0 == characters.1 {
             correct_feedback += 2;
         } else {
-            unused_letters[(target[i] - FIRST_LETTER) as usize] += 1;
+            unused_letters[(characters.0 - FIRST_LETTER) as usize] += 1;
         }
-    }
+    });
 
     // Use the histogram to find correct letters that are incorrectly placed
     let mut incorrect_feedback: Feedback = 0;
-    for i in 0..word_length {
+    target.iter().zip(guess.iter()).for_each(|characters| {
         incorrect_feedback *= 3;
-        if target[i] != guess[i] {
-            let letter: usize = (guess[i] - FIRST_LETTER) as usize;
+        if characters.0 != characters.1 {
+            let letter: usize = (characters.1 - FIRST_LETTER) as usize;
             if unused_letters[letter] > 0 {
                 unused_letters[letter] -= 1;
                 incorrect_feedback += 1;
             }
         }
-    }
+    });
     correct_feedback + incorrect_feedback
 }
 
