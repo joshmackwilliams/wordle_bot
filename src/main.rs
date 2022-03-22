@@ -20,9 +20,9 @@ use std::env;
 use std::fs::File;
 use std::io::{self, stdin, BufRead, Write};
 
-use wordle_bot::bot::WordleBot;
-use wordle_bot::dictionary::WordleDictionary;
-use wordle_bot::types::Feedback;
+use wordle_bot::feedback_calculator::Feedback;
+use wordle_bot::wordle_bot::WordleBot;
+use wordle_bot::wordle_dictionary::WordleDictionary;
 
 // The word length is hardcoded so that we can store buffers of the right length on the stack
 const WORD_LENGTH: usize = 5;

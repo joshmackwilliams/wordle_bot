@@ -16,6 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub mod bot;
-pub mod dictionary;
-pub mod types;
+pub mod feedback_calculator;
+pub mod wordle_bot;
+pub mod wordle_dictionary;

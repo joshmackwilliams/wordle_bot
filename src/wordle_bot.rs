@@ -16,8 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::dictionary::WordleDictionary;
-use crate::types::*;
+use crate::feedback_calculator::Feedback;
+use crate::wordle_dictionary::WordleDictionary;
+
+pub type Score = f32;
 
 const WORD_LENGTH: usize = 5;
 const POSSIBLE_FEEDBACKS: usize = 3_usize.pow(WORD_LENGTH as u32);

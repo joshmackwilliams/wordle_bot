@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::types::Feedback;
+use crate::feedback_calculator;
+use crate::feedback_calculator::Feedback;
 
 pub struct WordleDictionary<const WORD_LENGTH: usize> {
     n_words: usize,
@@ -77,43 +78,7 @@ impl<const WORD_LENGTH: usize> WordleDictionary<WORD_LENGTH> {
     fn calculate_feedback(&self, word: usize, guess: usize) -> Feedback {
         let word = self.solutions[word].as_bytes();
         let guess = self.all_words[guess].as_bytes();
-        let mut used = [false; WORD_LENGTH];
-        let mut correct = [false; WORD_LENGTH];
-        let mut contained = [false; WORD_LENGTH];
-        // Correctly placed check
-        for i in 0..WORD_LENGTH {
-            if word[i] == guess[i] {
-                used[i] = true;
-                correct[i] = true;
-            }
-        }
-        // Incorrectly placed check
-        for i in 0..WORD_LENGTH {
-            if correct[i] {
-                continue;
-            }
-            for j in 0..WORD_LENGTH {
-                if used[j] {
-                    continue;
-                }
-                if guess[i] == word[j] {
-                    contained[i] = true;
-                    used[j] = true;
-                    break;
-                }
-            }
-        }
-        // Convert these arrays to a numerical feedback
-        let mut feedback = 0;
-        for i in 0..WORD_LENGTH {
-            feedback *= 3;
-            if correct[i] {
-                feedback += 2;
-            } else if contained[i] {
-                feedback += 1;
-            }
-        }
-        feedback
+        feedback_calculator::calculate_feedback(word, guess)
     }
 
     pub fn get_feedback(&self, solution: usize, guess: usize) -> Feedback {
