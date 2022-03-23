@@ -19,82 +19,51 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use crate::feedback_calculator;
 use crate::feedback_calculator::Feedback;
 
-pub struct WordleDictionary<const WORD_LENGTH: usize> {
-    n_words: usize,
+use std::collections::HashSet;
+
+pub struct WordleDictionary {
     n_solutions: usize,
-    solutions: Vec<String>,
-    all_words: Vec<String>,
-    feedbacks: Vec<Vec<Feedback>>,
-    solutions_to_words: Vec<usize>,
+    words: Vec<String>,
+    feedbacks: Vec<Feedback>,
 }
 
-impl<const WORD_LENGTH: usize> WordleDictionary<WORD_LENGTH> {
-    pub fn new(all_words: Vec<String>, solutions: Vec<String>) -> Self {
-        let n_words = all_words.len();
+impl WordleDictionary {
+    pub fn new(guessable_words: Vec<String>, solutions: Vec<String>) -> Self {
         let n_solutions = solutions.len();
-        let mut dictionary = WordleDictionary {
-            n_words,
-            n_solutions,
-            all_words,
-            solutions,
-            feedbacks: Vec::new(),
-            solutions_to_words: Vec::new(),
-        };
-        dictionary.calculate_solutions_to_words();
-        dictionary.calculate_feedbacks();
-        dictionary
-    }
-
-    fn calculate_solutions_to_words(&mut self) {
-        self.solutions_to_words = self
-            .solutions
-            .iter()
-            .map(|solution_string| {
-                self.all_words
-                    .iter()
-                    .enumerate()
-                    .find(|(_, word_string)| *word_string == solution_string)
-                    .unwrap()
-                    .0
-            })
-            .collect();
-    }
-
-    pub fn solution_to_word(&self, solution: usize) -> usize {
-        self.solutions_to_words[solution]
-    }
-
-    fn calculate_feedbacks(&mut self) {
-        self.feedbacks = (0..self.n_words)
+        let solutions_set: HashSet<String> = HashSet::from_iter(solutions.iter().cloned());
+        let words: Vec<String> = solutions
             .into_iter()
-            .map(|guess| {
-                (0..self.n_solutions)
-                    .map(|solution| self.calculate_feedback(solution, guess))
-                    .collect()
+            .chain(
+                guessable_words
+                    .into_iter()
+                    .filter(|x| !solutions_set.contains(x)),
+            )
+            .collect();
+        let feedbacks: Vec<Feedback> = words
+            .iter()
+            .flat_map(|guess| {
+                words.iter().take(n_solutions).map(|solution| {
+                    feedback_calculator::calculate_feedback(solution.as_bytes(), guess.as_bytes())
+                })
             })
             .collect();
-    }
-
-    fn calculate_feedback(&self, word: usize, guess: usize) -> Feedback {
-        let word = self.solutions[word].as_bytes();
-        let guess = self.all_words[guess].as_bytes();
-        feedback_calculator::calculate_feedback(word, guess)
+        WordleDictionary {
+            n_solutions,
+            words,
+            feedbacks,
+        }
     }
 
     pub fn get_feedback(&self, solution: usize, guess: usize) -> Feedback {
-        self.feedbacks[guess][solution]
-    }
-
-    pub fn solution_string(&self, word: usize) -> &String {
-        &self.solutions[word]
+        self.feedbacks[(guess * self.n_solutions) + solution]
     }
 
     pub fn word_string(&self, word: usize) -> &String {
-        &self.all_words[word]
+        &self.words[word]
     }
 
     pub fn get_n_words(&self) -> usize {
-        self.n_words
+        self.words.len()
     }
 
     pub fn get_n_solutions(&self) -> usize {

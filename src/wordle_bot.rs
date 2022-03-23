@@ -25,14 +25,14 @@ const WORD_LENGTH: usize = 5;
 const POSSIBLE_FEEDBACKS: usize = 3_usize.pow(WORD_LENGTH as u32);
 
 pub struct WordleBot {
-    dictionary: WordleDictionary<WORD_LENGTH>,
+    dictionary: WordleDictionary,
     remaining_set: Vec<usize>,
     first_guess: usize,
     is_first_guess: bool,
 }
 
 impl WordleBot {
-    pub fn new(dictionary: WordleDictionary<WORD_LENGTH>) -> Self {
+    pub fn new(dictionary: WordleDictionary) -> Self {
         let n_solutions = dictionary.get_n_solutions();
         let mut bot = WordleBot {
             dictionary,
@@ -57,7 +57,7 @@ impl WordleBot {
 
     pub fn get_guess(&self) -> usize {
         if let Option::Some(solution) = self.get_solution() {
-            self.dictionary.solution_to_word(solution)
+            solution
         } else if self.is_first_guess {
             self.first_guess
         } else {
@@ -96,7 +96,7 @@ impl WordleBot {
         self.remaining_set = (0..self.dictionary.get_n_solutions()).collect();
     }
 
-    pub fn get_dictionary(&self) -> &WordleDictionary<WORD_LENGTH> {
+    pub fn get_dictionary(&self) -> &WordleDictionary {
         &self.dictionary
     }
 }

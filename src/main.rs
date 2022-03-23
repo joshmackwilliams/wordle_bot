@@ -24,9 +24,6 @@ use wordle_bot::feedback_calculator::Feedback;
 use wordle_bot::wordle_bot::WordleBot;
 use wordle_bot::wordle_dictionary::WordleDictionary;
 
-// The word length is hardcoded so that we can store buffers of the right length on the stack
-const WORD_LENGTH: usize = 5;
-
 fn feedback_from_string(input: &str) -> Feedback {
     let input = input.as_bytes();
     let mut feedback = 0;
@@ -45,11 +42,10 @@ fn display_average_guesses(mut bot: WordleBot) {
     let mut total_guesses = 0;
     for solution in 0..bot.get_dictionary().get_n_solutions() {
         bot.reset();
-        let solution_as_word = bot.get_dictionary().solution_to_word(solution);
         loop {
             let guess: usize = bot.get_guess();
             total_guesses += 1;
-            if guess == solution_as_word {
+            if guess == solution {
                 break;
             }
             bot.give_feedback(guess, bot.get_dictionary().get_feedback(solution, guess));
@@ -63,7 +59,7 @@ fn play_game(mut bot: WordleBot) {
     loop {
         match bot.get_solution() {
             Option::Some(solution) => {
-                let solution_string = bot.get_dictionary().solution_string(solution);
+                let solution_string = bot.get_dictionary().word_string(solution);
                 println!("Solution found: {solution_string}");
                 break;
             }
@@ -104,7 +100,7 @@ fn main() {
         .lines()
         .map(|x| x.unwrap())
         .collect();
-    let bot = WordleBot::new(WordleDictionary::<WORD_LENGTH>::new(all_words, solutions));
+    let bot = WordleBot::new(WordleDictionary::new(all_words, solutions));
 
     match mode.as_str() {
         "average" => display_average_guesses(bot),

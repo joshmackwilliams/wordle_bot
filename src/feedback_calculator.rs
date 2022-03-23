@@ -20,7 +20,7 @@ pub type Feedback = u32;
 
 // Some useful constants
 const NUM_LETTERS: usize = 26;
-const FIRST_LETTER: u8 = 'a' as u8;
+const FIRST_LETTER: u8 = b'a';
 
 pub fn calculate_feedback(target: &[u8], guess: &[u8]) -> Feedback {
     let word_length = target.len();
@@ -34,8 +34,8 @@ pub fn calculate_feedback(target: &[u8], guess: &[u8]) -> Feedback {
     }
 
     // Build a histogram of letters in the target and find correctly placed letters in one pass
-    let mut unused_letters: [u8; NUM_LETTERS] = [0; NUM_LETTERS];
-    let mut correct_feedback: Feedback = 0;
+    let mut unused_letters = [0; NUM_LETTERS];
+    let mut correct_feedback = 0;
     target.iter().zip(guess.iter()).for_each(|characters| {
         correct_feedback *= 3;
         if characters.0 == characters.1 {
@@ -46,11 +46,11 @@ pub fn calculate_feedback(target: &[u8], guess: &[u8]) -> Feedback {
     });
 
     // Use the histogram to find correct letters that are incorrectly placed
-    let mut incorrect_feedback: Feedback = 0;
+    let mut incorrect_feedback = 0;
     target.iter().zip(guess.iter()).for_each(|characters| {
         incorrect_feedback *= 3;
         if characters.0 != characters.1 {
-            let letter: usize = (characters.1 - FIRST_LETTER) as usize;
+            let letter = (characters.1 - FIRST_LETTER) as usize;
             if unused_letters[letter] > 0 {
                 unused_letters[letter] -= 1;
                 incorrect_feedback += 1;
