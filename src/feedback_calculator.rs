@@ -35,28 +35,32 @@ pub fn calculate_feedback(target: &[u8], guess: &[u8]) -> Feedback {
 
     // Build a histogram of letters in the target and find correctly placed letters in one pass
     let mut unused_letters = [0; NUM_LETTERS];
-    let mut correct_feedback = 0;
-    target.iter().zip(guess.iter()).for_each(|characters| {
-        correct_feedback *= 3;
-        if characters.0 == characters.1 {
-            correct_feedback += 2;
-        } else {
-            unused_letters[(characters.0 - FIRST_LETTER) as usize] += 1;
-        }
-    });
+    let correct_feedback = target
+        .iter()
+        .zip(guess.iter())
+        .fold(0, |current, characters| {
+            if characters.0 == characters.1 {
+                (current * 3) + 2
+            } else {
+                unused_letters[(characters.0 - FIRST_LETTER) as usize] += 1;
+                current * 3
+            }
+        });
 
     // Use the histogram to find correct letters that are incorrectly placed
-    let mut incorrect_feedback = 0;
-    target.iter().zip(guess.iter()).for_each(|characters| {
-        incorrect_feedback *= 3;
-        if characters.0 != characters.1 {
-            let letter = (characters.1 - FIRST_LETTER) as usize;
-            if unused_letters[letter] > 0 {
-                unused_letters[letter] -= 1;
-                incorrect_feedback += 1;
+    let incorrect_feedback = target
+        .iter()
+        .zip(guess.iter())
+        .fold(0, |current, characters| {
+            if characters.0 != characters.1 {
+                let letter = (characters.1 - FIRST_LETTER) as usize;
+                if unused_letters[letter] > 0 {
+                    unused_letters[letter] -= 1;
+                    return (current * 3) + 1;
+                }
             }
-        }
-    });
+            current * 3
+        });
     correct_feedback + incorrect_feedback
 }
 

@@ -16,9 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::feedback_calculator;
+use crate::feedback_calculator::calculate_feedback;
 use crate::feedback_calculator::Feedback;
-
 use std::collections::HashSet;
 
 pub struct WordleDictionary {
@@ -42,9 +41,10 @@ impl WordleDictionary {
         let feedbacks: Vec<Feedback> = words
             .iter()
             .flat_map(|guess| {
-                words.iter().take(n_solutions).map(|solution| {
-                    feedback_calculator::calculate_feedback(solution.as_bytes(), guess.as_bytes())
-                })
+                words
+                    .iter()
+                    .take(n_solutions)
+                    .map(|solution| calculate_feedback(solution.as_bytes(), guess.as_bytes()))
             })
             .collect();
         WordleDictionary {
